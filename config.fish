@@ -15,6 +15,9 @@ if status is-login
 	#discord & disown
 end
 
+#capital space
+xmodmap -e "keycode 65 = space underscore space underscore"
+
 fish_add_path -a /opt/cuda/bin /opt/cuda/nsight_systems/bin
 
 set -x GPG_TTY (tty)
@@ -23,8 +26,10 @@ set -x SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
 gpgconf --launch gpg-agent
 
 alias vim="nvim"
-alias vimrc="vim ~/.vimrc"
-set -xg EDITOR vim
+alias vimrc="nvim ~/.vimrc"
+
+alias subl="/opt/sublime_text/sublime_text"
+set -xg EDITOR nvim
 
 
 set -xg DESK ~/Desktop
@@ -41,28 +46,33 @@ function fish_prompt
 	echo \@(prompt_pwd)\>(set_color normal)
 end
 
+alias less="less -R"
+
+alias cdd="cd .."
+alias cddd="cd ../.."
+
+alias vim="nvim"
 alias sus="systemctl suspend"
 alias edit="subl -n "
 alias py="python"
 alias cls="clear"
 alias csl=cls
-alias m="make"
 alias sysu="systemctl --user"
-alias mclp="make 2>&1 | clip"
-alias mles="make 2>&1 | less"
+alias m="make"
+alias mc="make &| clip"
+alias ml="make &| less"
+alias me="make &| grep 'error' | less"
 alias ble="blender --python-use-system-env"
 alias windo="sudo efibootmgr --bootnext 0001 && reboot"
 alias ema="emacs -nw"
 alias servehere="py -m http.server"
-alias zb="zig build"
-alias zr="zig run"
 
 #notes
 function todo
-	echo $argv >> todo.txt
+	echo $argv >> ~/docs/todo.txt
 end
 function rant
-	echo $argv >> rants.txt
+	echo $argv >> ~/docs/rants.txt
 end
 
 function clip
@@ -72,16 +82,18 @@ end
 function search
 	tree -f | grep -i "$argv"
 end
-
+function replace
+	find . -type f -exec sed -i "s/$argv[1]/$argv[2]/g" {} +
+end
 
 #directories
 alias sl="cd ~/p/suckless"
-alias prog="cd ~/p"
 alias p3="cd ~/p/3"
-alias less="less -R"
 
 #dev envs
-alias alk="cd ~/p/alkahest & thunar & /opt/sublime_text/sublime_text"
+function dev
+	cd ~/p/$argv[1] && thunar & subl .
+end
 
 #git
 alias gstat="git status"
@@ -129,7 +141,12 @@ function ffcat
 	ffmpeg -f concat -safe 0 -i <(echo "file '$argv[1]'" echo "file '$argv[2]'";) -c copy $argv[3]
 end
 function ffclip
-	ffmpeg -i $argv[1] -ss $argv[2] -t $argv[3] -c copy $argv[4]
+	ffmpeg -i $argv[1] -ss $argv[2] -t $argv[3] $argv[4]
+end
+
+function udisc
+	sudo thunar /home/khlor/Downloads &
+	sudo thunar /usr/share/discord
 end
 
 # opam configuration
