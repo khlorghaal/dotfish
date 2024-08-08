@@ -12,7 +12,7 @@ if status is-login
 		
 	#firefox & disown
 	#brave & disown
-	#discord & disown
+	/opt/discord/Discord & disown
 end
 
 #capital space
@@ -46,7 +46,7 @@ function fish_prompt
 	echo \@(prompt_pwd)\>(set_color normal)
 end
 
-alias less="less -R"
+alias less="less -r"
 
 alias cdd="cd .."
 alias cddd="cd ../.."
@@ -145,8 +145,8 @@ function ffclip
 end
 
 function udisc
-	sudo thunar /home/khlor/Downloads &
 	sudo thunar /usr/share/discord
+	ls -1 Downloads/discord* | xargs -L1 -I{} sudo mv {} -t /usr/share/discord
 end
 
 # opam configuration
