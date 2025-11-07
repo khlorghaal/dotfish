@@ -1,18 +1,14 @@
 if status is-login
-    if test -z "$DISPLAY" -a "$XDG_VTNR" = 1
-        startx /usr/bin/startxfce4
-    end
-    if test -z "$DISPLAY" -a "$XDG_VTNR" = 2
-        startx /usr/bin/i3
-    end
-
-	#xsetwacom --list devices
-	#todo sed "pad" -> number
-	#xsetwacom set 12 MapToOutput 2304x1440+1920+0
-		
-	#firefox & disown
-	#brave & disown
-	/opt/discord/Discord & disown
+    if test -z "$DISPLAY"
+ 	if test "$XDG_VTNR" = 1
+		startx /usr/bin/startxfce4
+		xsetwacom set $(xsetwacom --list devices | awk '/pad/{print $NF}' | cut -d: -f2) MapToOutput 2304x1440+0+0
+	end
+	if test "$XDG_VTNR" = 2
+		startx /usr/bin/i3
+		/.config/i3_xrandr.sh
+	end
+end
 end
 
 #capital space
@@ -34,9 +30,11 @@ set -xg EDITOR nvim
 
 set -xg DESK ~/Desktop
 
-set -xg configfish '~/.config/fish/config.fish'
-alias confish="$EDITOR $configfish && refreshfish && echo sourced $configfish"
-alias refreshfish="source $configfish"
+set -xg configfish ~/.config/fish/config.fish
+function confish
+	$EDITOR $configfish
+	source $configfish
+end
 
 
 set -g fish_prompt_pwd_dir_length 3
@@ -64,8 +62,13 @@ alias ml="make &| less"
 alias me="make &| grep 'error' | less"
 alias ble="blender --python-use-system-env"
 alias windo="sudo efibootmgr --bootnext 0001 && reboot"
-alias ema="emacs -nw"
+alias em="emacs -nw"
+alias shud="shutdown now"
 alias servehere="py -m http.server"
+alias renet="sudo systemctl restart NetworkManager"
+alias chx="chmod +x"
+alias kill="killall -s 9"
+alias venv="source venv/bin/activate.fish"
 
 #notes
 function todo
@@ -90,9 +93,22 @@ end
 alias sl="cd ~/p/suckless"
 alias p3="cd ~/p/3"
 
+function tail
+	/bin/tail -F $argv[1] 2>&1 | sed -u 's/^tail: .*: file truncated/\x1b[2J/'
+end
+
+
 #dev envs
 function dev
-	cd ~/p/$argv[1] && thunar & subl .
+	cd ~/p/$argv[1] & subl .
+	tmux kill-session -t ide
+	tmux new-session -d -s ide
+	tmux select-layout -t ide tiled
+	tmux split-window -h
+	tmux split-window -v
+	tmux send-keys -t ide:0.1 "clear && tail ./stdout" Enter
+	tmux send-keys -t ide:0.2 "clear && tail ./stderr" Enter
+	tmux attach-session -t ide
 end
 
 #git
@@ -108,7 +124,7 @@ function clone
 	git clone $argv
 end
 function cloneshallow
-	git clone $argv --depth 1 --recurse-submodules --shallow-submodules
+	git clone $argv --depth 1 --recurse-submodules --shallow-submodules --single-branch
 end
 
 #downloading
@@ -122,8 +138,8 @@ function pacdl
 	sudo pacman -S $argv
 end
 
-function upgrade
-	sudo pacman -Sy archlinux-keyring && sudo pacman -Su && sudo /root/fixbootlol.sh
+function syu
+	sudo pacman -Sy archlinux-keyring && sudo pacman -Su
 end
 
 function dn
@@ -131,6 +147,9 @@ function dn
 end 
 
 #ffmpeg
+function ffspeed
+	ffmpeg -i $argv[1] -filter:a "rubberband=tempo=$argv[2]" -filter:v "setpts=$argv[3]*PTS" $argv[4]
+end
 function ffpngi
 	ffmpeg -framerate $argv[1] -i %4d.png -b:v 8M -c:v libx264 -crf 6 -pix_fmt yuv420p -preset slow -c:a aac -movflags +faststart $argv[2]
 end
@@ -145,9 +164,8 @@ function ffclip
 end
 
 function udisc
-	sudo thunar /usr/share/discord
-	ls -1 Downloads/discord* | xargs -L1 -I{} sudo mv {} -t /usr/share/discord
+	sudo mv /home/khlor/Downloads/discord* -t /opt/discord
+	sudo tar -zxvf /opt/discord/discord-*.tar.gz -C /opt/discord
+	sudo rm /opt/discord/discord-*.tar.gz
 end
 
-# opam configuration
-source /home/khlor/.opam/opam-init/init.fish > /dev/null 2> /dev/null; or true
